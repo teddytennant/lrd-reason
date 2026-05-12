@@ -28,6 +28,7 @@ c_red() { printf "\033[1;31m%s\033[0m\n" "$*" >&2; }
 step() { c_blue "==> $*"; }
 
 # 0. Locate / clone the repo.
+DID_CLONE_OR_FETCH=0
 if [ -f "scripts/finetune_uncensored.py" ] && [ -f "configs/finetune_uncensored.yaml" ]; then
   step "using existing checkout at $(pwd)"
 else
@@ -41,6 +42,16 @@ else
     git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$WORKDIR"
   fi
   cd "$WORKDIR"
+  DID_CLONE_OR_FETCH=1
+fi
+
+# raw.githubusercontent.com caches /raw/ for ~5 min. If the user curl-pipe-bashed
+# this script, our in-memory copy may lag behind what we just cloned. Re-exec
+# from disk on the first run to get the freshest logic.
+if [ "$DID_CLONE_OR_FETCH" = "1" ] && [ -z "${LRD_REEXEC:-}" ] && [ -f "scripts/launch.sh" ]; then
+  c_yellow "re-exec'ing from cloned scripts/launch.sh (in case raw CDN is stale)"
+  export LRD_REEXEC=1
+  exec bash scripts/launch.sh
 fi
 
 # 1. uv installer (idempotent).
