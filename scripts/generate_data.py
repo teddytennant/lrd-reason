@@ -1,8 +1,14 @@
-"""H200 entry: generate CoT traces from the frozen LLM via vLLM.
+"""H200 entry: generate the Stage-2 cold-start CoT corpus.
+
+In the three-stage curriculum (see README) this script produces only the small
+(~10–50k example) cold-start corpus that seeds the `(prompt -> latent -> CoT)`
+mapping for the recurrent + diffusion modules. Bulk reasoning competence comes
+from Stage 3 (RLVR), not from this corpus — so the right knob to turn here is
+*quality per example*, not volume.
 
 Loads problems from a JSONL (one {"prompt": str, "session_id": ..., "turn_idx": ...}
 per line), spins up a vLLM engine with the configured backbone, and writes the
-output JSONL.
+output JSONL with traces produced under `COT_SYSTEM_PROMPT`.
 
 Not executed by tests; this is the script that bakes the data on the H200 box.
 """

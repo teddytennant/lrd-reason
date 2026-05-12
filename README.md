@@ -6,7 +6,12 @@ This repo is the **code build** — runnable end-to-end on CPU via stubs, ready 
 
 ## Project Values
 
-This codebase is governed by the Constitution for Truth-Seeking AI. Every training example is generated under a distilled version of these principles (see `src/lrd_reason/constitution.py`). The full constitution:
+This codebase is governed by the Constitution for Truth-Seeking AI. The full 7-principle constitution lives in `src/lrd_reason/constitution.py` as `FULL_CONSTITUTION`, alongside two distilled prompts:
+
+- `COT_SYSTEM_PROMPT` — the per-example system prompt, used both for Stage-2 cold-start trace generation and as the inference-time policy shaper for the deployed model. Encodes Occam, verify-before-answer, bold conjecture + ruthless self-attack (the Dionysian/Apollonian synthesis), independent thinking, epistemic honesty, no padding.
+- `PROBLEM_GENERATOR_PROMPT` — the system prompt for synthesising fresh verifiable problems where no suitable open dataset exists.
+
+The full constitution:
 
 **I. Truth Above All.** State what is known. State what is unknown. State nothing else. When evidence kills a belief, let it die.
 
@@ -27,6 +32,18 @@ This codebase is governed by the Constitution for Truth-Seeking AI. Every traini
 ![Architecture](docs/architecture.svg)
 
 Trainable params total ~390M (recurrent + diffusion + adapter + LoRA). Backbone (~35B) and encoder (~335M) are frozen.
+
+## Training curriculum
+
+Three stages, designed so that values come from real human truth-seekers (raw text) rather than synthetic teacher imitation, and behaviour comes from verifier-grounded RL rather than imitation of CoT traces.
+
+| Stage | Goal | What trains | Data | Status |
+|---|---|---|---|---|
+| **1. Unsupervised pretrain** | Imprint voice and reasoning patterns from real exemplars | LoRA adapter on the LLM | Raw text: complete Nietzsche + Kant from Project Gutenberg, Lean mathlib4, arXiv math, SQLite/TigerBeetle/CPython source, FineWeb-Edu slice | TO BUILD (`train/stage_pretrain.py`) |
+| **2. Cold-start latent SFT** | Seed the recurrent + diffusion modules with the `(prompt → latent → CoT)` mapping | Recurrent + diffusion; then adapter + LoRA | ~10–50k high-quality CoT traces from Stage-2 generator (`scripts/generate_data.py`) under `COT_SYSTEM_PROMPT` | Built (`train/stage1.py` + `train/stage2.py`) |
+| **3. RLVR main phase** | Grow real reasoning competence from verifier reward | All trainable modules, with KL anchor to Stage-2 checkpoint | Verifiable problems: MATH, GSM8K, CodeContests, APPS, BBH, LogiQA, mathlib4 type-checks | TO BUILD (`train/stage_rlvr.py` + `eval/verifiers/`) |
+
+Philosophy is **Stage 1 only** (raw text → LoRA voice imprint). No synthetic Q&A is generated from Kant or Nietzsche; the stance only transfers from the authors themselves.
 
 ## Quickstart (CPU smoke)
 
@@ -50,12 +67,12 @@ See `LAUNCH.md` for the 72-hour H200 runbook. Not executed by this repo; that's 
 configs/        YAML configs (main, smoke, ablations/{baseline,recurrent_only,diffusion_only,full})
 src/lrd_reason/
   config.py         dataclass configs + YAML loader
-  constitution.py   distilled CoT system prompt
+  constitution.py   distilled CoT + problem-generator prompts; FULL_CONSTITUTION
   models/           encoder, recurrent_state, diffusion, adapter, pipeline
   data/             dataset, collate, cot_generator
-  train/            loop, stage1, stage2
+  train/            loop, stage1, stage2 (cold-start); stage_pretrain, stage_rlvr (to build)
   infer/            state_store, pipeline, cli
-  eval/             gsm8k, math_bench, multi_turn, metrics, ablations
+  eval/             gsm8k, math_bench, multi_turn, metrics, ablations; verifiers/ (to build)
 scripts/        thin entry points
 tests/          pytest suite (CPU-only)
 ```

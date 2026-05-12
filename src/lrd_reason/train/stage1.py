@@ -1,4 +1,9 @@
-"""Stage 1: joint training of recurrent state + rectified-flow diffusion denoiser.
+"""Stage 1 of the cold-start: joint training of recurrent state + rectified-flow diffusion denoiser.
+
+In the three-stage curriculum, this stage (together with `stage2.py`) IS the
+cold-start that seeds the `(prompt -> latent -> CoT)` mapping. The unsupervised
+LoRA pretrain (Stage 1 of the curriculum) runs in `stage_pretrain.py` BEFORE
+this; the RLVR main phase (Stage 3) runs in `stage_rlvr.py` AFTER it.
 
 Loss = rectified_flow_loss + contrastive_weight * contrastive_state_loss.
 

@@ -1,7 +1,11 @@
-"""Stage 2: adapter + LoRA SFT on gold completions, with refined plan latent as prefix.
+"""Stage 2 of the cold-start: adapter + LoRA SFT on gold completions, with the refined plan latent as prefix.
 
-Stage 1 must have produced a checkpoint (or be loaded via --stage1-checkpoint).
-Stage 2 thaws the adapter and (if configured) attaches LoRA on the LLM.
+Together with `stage1.py`, completes the cold-start phase of the three-stage
+curriculum. Stage 1 (`stage1.py`) must have produced a checkpoint (or be loaded
+via --stage1-checkpoint). Stage 2 thaws the adapter and (if configured) attaches
+LoRA on the LLM. After this finishes, the resulting checkpoint is the anchor that
+Stage 3 (`stage_rlvr.py`) does RL on top of, with a KL penalty against this
+checkpoint to prevent the policy from drifting away from the cold-start posture.
 """
 
 from __future__ import annotations
