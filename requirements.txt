@@ -1,0 +1,17 @@
+# Core (CPU-friendly, used in smoke tests)
+torch>=2.4
+numpy>=1.26
+pyyaml>=6.0
+
+# Real run (install separately on H200 box; not needed for CPU smoke)
+# transformers>=4.45
+# sentence-transformers>=3.0
+# peft>=0.13
+# accelerate>=0.34
+# datasets>=2.20
+# vllm>=0.6
+# mamba-ssm>=2.2
+
+# Dev
+pytest>=8
+ruff>=0.6

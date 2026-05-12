@@ -1,0 +1,67 @@
+run:
+  name: lrd-reason-smoke
+  seed: 0
+  output_dir: runs/smoke
+  device: cpu
+  dtype: float32
+
+model:
+  latent_dim: 64
+
+  encoder:
+    kind: stub
+    raw_dim: 64
+    projector_path: null
+
+  recurrent:
+    kind: gru
+    hidden_dim: 64
+    expand: 1
+    n_layers: 1
+
+  diffusion:
+    d_model: 48
+    n_layers: 2
+    n_heads: 4
+    dropout: 0.0
+    n_inference_steps: 4
+
+  adapter:
+    n_prefix: 2
+    llm_hidden: 32
+    lora_r: 0
+    lora_alpha: 0
+    lora_dropout: 0.0
+    lora_targets: []
+
+  llm:
+    kind: stub
+    hf_id: stub
+    vocab_size: 64
+    max_new_tokens: 8
+
+data:
+  train_jsonl: tests/fixtures/cot.smoke.jsonl
+  val_jsonl: tests/fixtures/cot.smoke.jsonl
+  latents_path: null
+  task_embed_dim: 16
+  num_workers: 0
+
+train:
+  batch_size: 4
+  micro_batch_size: 2
+  grad_accum_steps: 2
+  lr: 1.0e-3
+  weight_decay: 0.0
+  warmup_steps: 0
+  total_steps: 20
+  grad_clip: 1.0
+  log_every: 5
+  ckpt_every: 100
+  contrastive_weight: 0.1
+
+eval:
+  gsm8k_n: 2
+  math_n: 2
+  multi_turn_scenarios: 2
+  diffusion_step_grid: [1, 4]

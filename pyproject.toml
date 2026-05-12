@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lrd-reason"
+version = "0.1.0"
+description = "Latent Recurrent Diffusion Reasoning hybrid: recurrent state + latent flow-matching on top of a frozen instruct LLM"
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+    "torch>=2.4",
+    "numpy>=1.26",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+hf = [
+    "transformers>=4.45",
+    "sentence-transformers>=3.0",
+    "peft>=0.13",
+    "accelerate>=0.34",
+    "datasets>=2.20",
+]
+vllm = ["vllm>=0.6"]
+mamba = ["mamba-ssm>=2.2"]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["lrd_reason*"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -ra"
+markers = [
+    "gpu: tests that require CUDA",
+    "network: tests that require network or HF hub access",
+    "slow: tests that take >5s on CPU",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501"]

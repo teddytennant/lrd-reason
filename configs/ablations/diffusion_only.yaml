@@ -1,0 +1,9 @@
+_inherit: ../main.yaml
+
+run:
+  name: ablation-diffusion-only
+
+ablation:
+  use_recurrent: false
+  use_diffusion: true
+  zero_prefix: false

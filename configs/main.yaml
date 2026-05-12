@@ -1,0 +1,69 @@
+run:
+  name: lrd-reason-main
+  seed: 1337
+  output_dir: runs/main
+  device: cuda
+  dtype: bfloat16
+
+model:
+  latent_dim: 256
+
+  encoder:
+    kind: bge
+    hf_id: BAAI/bge-large-en-v1.5
+    raw_dim: 1024
+    pooling: cls
+    projector_path: null   # null → random orthogonal init; set to data/projector.pt after PCA fit
+
+  recurrent:
+    kind: mamba2
+    hidden_dim: 256
+    expand: 2
+    n_layers: 4
+
+  diffusion:
+    d_model: 320
+    n_layers: 8
+    n_heads: 8
+    dropout: 0.0
+    n_inference_steps: 8
+
+  adapter:
+    n_prefix: 8
+    llm_hidden: 5120        # placeholder; resolved from llm.config.hidden_size at load
+    lora_r: 32
+    lora_alpha: 32
+    lora_dropout: 0.0
+    lora_targets: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+  llm:
+    kind: hf
+    hf_id: Qwen/Qwen3.5-35B-A3B-FP8
+    trust_remote_code: true
+    max_new_tokens: 1024
+
+data:
+  train_jsonl: data/cot.merged.jsonl
+  val_jsonl: data/cot.val.jsonl
+  latents_path: data/latents.pt
+  task_embed_dim: 64
+  num_workers: 4
+
+train:
+  batch_size: 128
+  micro_batch_size: 8
+  grad_accum_steps: 16
+  lr: 2.0e-4
+  weight_decay: 0.01
+  warmup_steps: 500
+  total_steps: 30000
+  grad_clip: 1.0
+  log_every: 25
+  ckpt_every: 2000
+  contrastive_weight: 0.1
+
+eval:
+  gsm8k_n: 250
+  math_n: 250
+  multi_turn_scenarios: 20
+  diffusion_step_grid: [1, 4, 8, 16]

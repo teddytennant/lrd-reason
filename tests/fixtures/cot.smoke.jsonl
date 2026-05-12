@@ -1,0 +1,8 @@
+{"prompt": "What is 2 + 2?", "gold_cot": "Add 2 and 2.", "gold_answer": "4", "session_id": "s0", "turn_idx": 0}
+{"prompt": "What is 3 + 5?", "gold_cot": "Add 3 and 5.", "gold_answer": "8", "session_id": "s0", "turn_idx": 1}
+{"prompt": "What is 7 * 6?", "gold_cot": "Multiply 7 and 6.", "gold_answer": "42", "session_id": "s1", "turn_idx": 0}
+{"prompt": "What is 9 - 4?", "gold_cot": "Subtract 4 from 9.", "gold_answer": "5", "session_id": "s2", "turn_idx": 0}
+{"prompt": "Is 7 prime?", "gold_cot": "7 has no divisors other than 1 and 7.", "gold_answer": "yes", "session_id": "s3", "turn_idx": 0}
+{"prompt": "What is 10 / 2?", "gold_cot": "Divide 10 by 2.", "gold_answer": "5", "session_id": "s4", "turn_idx": 0}
+{"prompt": "What is 8 + 13?", "gold_cot": "Add 8 and 13.", "gold_answer": "21", "session_id": "s5", "turn_idx": 0}
+{"prompt": "What is 100 - 37?", "gold_cot": "Subtract 37 from 100.", "gold_answer": "63", "session_id": "s6", "turn_idx": 0}

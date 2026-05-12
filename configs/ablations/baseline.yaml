@@ -1,0 +1,9 @@
+_inherit: ../main.yaml
+
+run:
+  name: ablation-baseline
+
+ablation:
+  use_recurrent: false
+  use_diffusion: false
+  zero_prefix: true
