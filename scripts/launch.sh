@@ -51,21 +51,40 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 command -v uv >/dev/null 2>&1 || { c_red "uv install failed (not on PATH)"; exit 1; }
 
-# 2. venv + deps.
-step "uv venv (python 3.11)"
-uv venv --python 3.11 .venv
-# shellcheck disable=SC1091
-source .venv/bin/activate
+# 2. Choose interpreter + install deps.
+#    Strategy: if the system python (e.g. Colab) already has torch +
+#    transformers, reuse it — avoids re-downloading ~2GB of CUDA wheels.
+#    Otherwise create a fresh .venv with uv.
+SYSTEM_PY="$(command -v python3 || command -v python || true)"
+if [ -n "$SYSTEM_PY" ] && "$SYSTEM_PY" -c "import torch, transformers" 2>/dev/null; then
+  step "using existing system Python ($SYSTEM_PY) — torch + transformers detected"
+  PY="$SYSTEM_PY"
+  UV_TARGET=(--system)
+else
+  step "creating fresh venv (.venv, python 3.11)"
+  # Colab and some images set UV_SYSTEM_PYTHON=1 globally so `uv pip` ignores
+  # the active venv. Clear it for this script's invocation.
+  unset UV_SYSTEM_PYTHON UV_PROJECT_ENVIRONMENT
+  uv venv --python 3.11 .venv
+  PY="$PWD/.venv/bin/python"
+  UV_TARGET=(--python "$PY")
+  export VIRTUAL_ENV="$PWD/.venv"
+  export PATH="$PWD/.venv/bin:$PATH"
+fi
 
 step "installing dependencies (this can take a few minutes)"
-uv pip install -e ".[hf]" >/dev/null
-uv pip install "trl>=0.11" "rich>=13" >/dev/null
-# torch is pulled by pyproject "hf" extra via transformers/peft chain, but be explicit
-# about CUDA support — uv defers wheel selection to the active platform.
-python -c "import torch; print(f'  torch={torch.__version__} cuda={torch.cuda.is_available()}')"
+uv pip install "${UV_TARGET[@]}" -e ".[hf]" "trl>=0.11" "rich>=13"
+
+# Verify torch made it into the chosen interpreter.
+if ! "$PY" -c "import torch" 2>/dev/null; then
+  c_yellow "torch not in target interpreter after install — installing explicitly"
+  uv pip install "${UV_TARGET[@]}" torch
+fi
+
+"$PY" -c "import torch; print(f'  torch={torch.__version__} cuda={torch.cuda.is_available()}')"
 
 # 3. Sanity: GPU present?
-if ! python -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)"; then
+if ! "$PY" -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)"; then
   c_red "no CUDA device visible to torch — training will fail"
   c_red "(set LRD_DRY_RUN=1 to set up data and skip training)"
   if [ "${LRD_DRY_RUN:-}" != "1" ]; then exit 1; fi
@@ -74,11 +93,11 @@ fi
 # 4. Fetch philosophy corpus (idempotent).
 mkdir -p data/philosophy logs runs
 step "fetching Kant + Nietzsche from Project Gutenberg"
-python scripts/fetch_philosophy.py --out data/philosophy
+"$PY" scripts/fetch_philosophy.py --out data/philosophy
 
 # 5. Build the SFT corpus (philosophy-only -> --mix 1.0, no CoT).
 step "preparing SFT corpus (philosophy-only, --mix 1.0)"
-python scripts/prepare_uncensored_data.py \
+"$PY" scripts/prepare_uncensored_data.py \
   --philosophy data/philosophy \
   --output data/uncensored_sft.jsonl \
   --mix 1.0
@@ -96,7 +115,7 @@ step "starting trainer (logs/train.stdout, logs/metrics.jsonl)"
 : > logs/train.stdout
 : > logs/metrics.jsonl
 
-python -u scripts/finetune_uncensored.py \
+"$PY" -u scripts/finetune_uncensored.py \
   --config configs/finetune_uncensored.yaml \
   --metrics-jsonl logs/metrics.jsonl \
   >> logs/train.stdout 2>&1 &
@@ -132,7 +151,7 @@ if [ "${LRD_NO_TUI:-}" = "1" ]; then
   kill "$TAIL_PID" 2>/dev/null || true
 else
   step "launching TUI (Ctrl-C aborts training; run under tmux to detach safely)"
-  python scripts/tui.py \
+  "$PY" scripts/tui.py \
     --metrics logs/metrics.jsonl \
     --stdout logs/train.stdout \
     --pid "$TRAIN_PID" \
