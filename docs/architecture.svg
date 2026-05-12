@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 900"
+     font-family="system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif">
+  <!-- Opaque background so the figure stays legible in GitHub dark mode -->
+  <rect width="760" height="900" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3a3a3a"/>
+    </marker>
+    <marker id="arrow-thin" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#888"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="380" y="34" text-anchor="middle" font-size="17" font-weight="600" fill="#1a1a1a">
+    Latent Recurrent Diffusion Reasoning
+  </text>
+  <text x="380" y="54" text-anchor="middle" font-size="11" fill="#666">
+    persistent recurrent state + rectified-flow latent refinement around a frozen instruct LLM
+  </text>
+
+  <!-- Prompt pill -->
+  <rect x="290" y="76" width="180" height="32" rx="16" fill="#fafafa" stroke="#999" stroke-width="1"/>
+  <text x="380" y="97" text-anchor="middle" font-size="12" fill="#333">prompt</text>
+
+  <line x1="380" y1="108" x2="380" y2="138" stroke="#3a3a3a" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <!-- Encoder (frozen) -->
+  <rect x="240" y="138" width="280" height="70" rx="6" fill="#ececec" stroke="#666" stroke-width="1.2"/>
+  <text x="380" y="160" text-anchor="middle" font-size="13" font-weight="600" fill="#222">Text Encoder ❄</text>
+  <text x="380" y="178" text-anchor="middle" font-size="11" fill="#555">BAAI/bge-large-en-v1.5</text>
+  <text x="380" y="196" text-anchor="middle" font-size="10" fill="#888">+ frozen orthogonal projector  1024 → 256</text>
+
+  <line x1="380" y1="208" x2="380" y2="238" stroke="#3a3a3a" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="395" y="226" font-size="10" fill="#555" font-style="italic">z ∈ ℝ²⁵⁶</text>
+
+  <!-- Recurrent (trainable) -->
+  <rect x="240" y="238" width="280" height="70" rx="6" fill="#dde7f0" stroke="#4a6b8a" stroke-width="1.2"/>
+  <text x="380" y="260" text-anchor="middle" font-size="13" font-weight="600" fill="#1f3b5d">Recurrent State</text>
+  <text x="380" y="278" text-anchor="middle" font-size="11" fill="#1f3b5d">Mamba-2  (GRU fallback on CPU)</text>
+  <text x="380" y="296" text-anchor="middle" font-size="10" fill="#5a7595">256 → 256,  n_layers = 4</text>
+
+  <!-- Persistent state loop -->
+  <path d="M520 262 Q610 262 610 294 Q610 326 520 326"
+        fill="none" stroke="#888" stroke-width="1.1" stroke-dasharray="3 3"
+        marker-end="url(#arrow-thin)"/>
+  <text x="617" y="270" font-size="10" fill="#666">load prev state</text>
+  <text x="617" y="298" font-size="10" fill="#666">save new state</text>
+  <text x="617" y="314" font-size="9"  fill="#888" font-style="italic">sessions/{id}.pt</text>
+
+  <line x1="380" y1="308" x2="380" y2="338" stroke="#3a3a3a" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="395" y="326" font-size="10" fill="#555" font-style="italic">s ∈ ℝ²⁵⁶</text>
+
+  <!-- Diffusion (trainable) -->
+  <rect x="240" y="338" width="280" height="96" rx="6" fill="#dde7f0" stroke="#4a6b8a" stroke-width="1.2"/>
+  <text x="380" y="362" text-anchor="middle" font-size="13" font-weight="600" fill="#1f3b5d">Rectified-Flow Denoiser</text>
+  <text x="380" y="380" text-anchor="middle" font-size="11" fill="#1f3b5d">8 layers, d=320, FiLM-conditioned</text>
+  <text x="380" y="398" text-anchor="middle" font-size="11" fill="#1f3b5d">K Euler steps:  xₜ ← xₜ + (1/K)·v_θ(xₜ, t, c)</text>
+  <text x="380" y="418" text-anchor="middle" font-size="10" fill="#5a7595">K ∈ {1, 4, 8, 16}  (ablation knob)</text>
+
+  <!-- Side conditioning inputs -->
+  <g>
+    <rect x="100" y="350" width="120" height="22" rx="3" fill="#fff" stroke="#bbb"/>
+    <text x="160" y="365" text-anchor="middle" font-size="10" fill="#555">timestep  t ∈ (0,1)</text>
+    <line x1="220" y1="361" x2="240" y2="372" stroke="#888" stroke-width="1" marker-end="url(#arrow-thin)"/>
+
+    <rect x="100" y="380" width="120" height="22" rx="3" fill="#fff" stroke="#bbb"/>
+    <text x="160" y="395" text-anchor="middle" font-size="10" fill="#555">task embedding</text>
+    <line x1="220" y1="391" x2="240" y2="391" stroke="#888" stroke-width="1" marker-end="url(#arrow-thin)"/>
+
+    <rect x="100" y="410" width="120" height="22" rx="3" fill="#fff" stroke="#bbb"/>
+    <text x="160" y="425" text-anchor="middle" font-size="10" fill="#555">z  (skip)</text>
+    <line x1="220" y1="421" x2="240" y2="410" stroke="#888" stroke-width="1" marker-end="url(#arrow-thin)"/>
+  </g>
+
+  <line x1="380" y1="434" x2="380" y2="464" stroke="#3a3a3a" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="395" y="452" font-size="10" fill="#555" font-style="italic">p ∈ ℝ²⁵⁶  (plan latent)</text>
+
+  <!-- Adapter (trainable) -->
+  <rect x="240" y="464" width="280" height="70" rx="6" fill="#dde7f0" stroke="#4a6b8a" stroke-width="1.2"/>
+  <text x="380" y="486" text-anchor="middle" font-size="13" font-weight="600" fill="#1f3b5d">Soft-Prefix Adapter</text>
+  <text x="380" y="504" text-anchor="middle" font-size="11" fill="#1f3b5d">Linear  256 → (n_prefix · H)</text>
+  <text x="380" y="522" text-anchor="middle" font-size="10" fill="#5a7595">n_prefix = 8</text>
+
+  <line x1="380" y1="534" x2="380" y2="564" stroke="#3a3a3a" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="395" y="552" font-size="10" fill="#555" font-style="italic">prefix ∈ ℝ⁸ˣᴴ</text>
+
+  <!-- LLM (frozen + LoRA inset) -->
+  <rect x="240" y="564" width="280" height="96" rx="6" fill="#ececec" stroke="#666" stroke-width="1.2"/>
+  <text x="380" y="588" text-anchor="middle" font-size="13" font-weight="600" fill="#222">Frozen LLM ❄</text>
+  <text x="380" y="606" text-anchor="middle" font-size="11" fill="#555">Qwen3.5-35B-A3B-FP8</text>
+  <rect x="258" y="620" width="244" height="30" rx="4" fill="#dde7f0" stroke="#4a6b8a" stroke-width="1"/>
+  <text x="380" y="639" text-anchor="middle" font-size="10" fill="#1f3b5d">
+    LoRA  r=32  on  q,k,v,o + gate/up/down
+  </text>
+
+  <line x1="380" y1="660" x2="380" y2="690" stroke="#3a3a3a" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <!-- Response -->
+  <rect x="290" y="690" width="180" height="32" rx="16" fill="#fafafa" stroke="#999" stroke-width="1"/>
+  <text x="380" y="711" text-anchor="middle" font-size="12" fill="#333">response (tokens)</text>
+
+  <!-- Legend -->
+  <g transform="translate(60, 770)">
+    <text x="0" y="0" font-size="11" font-weight="600" fill="#333">Legend</text>
+
+    <rect x="0"  y="14" width="18" height="14" rx="3" fill="#ececec" stroke="#666"/>
+    <text x="26" y="25" font-size="11" fill="#333">frozen ❄  (no gradient)</text>
+
+    <rect x="0"  y="36" width="18" height="14" rx="3" fill="#dde7f0" stroke="#4a6b8a"/>
+    <text x="26" y="47" font-size="11" fill="#333">trainable</text>
+
+    <text x="200" y="0"  font-size="11" font-weight="600" fill="#333">Trainable parameters</text>
+    <text x="200" y="18" font-size="11" fill="#555">recurrent      ≈ 100M</text>
+    <text x="200" y="34" font-size="11" fill="#555">diffusion      ≈ 250M</text>
+    <text x="200" y="50" font-size="11" fill="#555">adapter + LoRA ≈  40M</text>
+    <text x="200" y="70" font-size="11" font-weight="600" fill="#333">≈ 390M trainable / 35B total</text>
+
+    <text x="420" y="0"  font-size="11" font-weight="600" fill="#333">Training losses</text>
+    <text x="420" y="18" font-size="10" fill="#555">Stage 1:  ‖v − (x₀ − ε)‖²  +  0.1·NCE(s)</text>
+    <text x="420" y="34" font-size="10" fill="#555">Stage 2:  −log p(cot, ans | prefix)</text>
+  </g>
+</svg>

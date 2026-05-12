@@ -24,19 +24,7 @@ This codebase is governed by the Constitution for Truth-Seeking AI. Every traini
 
 ## Architecture
 
-```
-prompt
-  ├─► text encoder (frozen BGE-large, 1024-d)
-  │     └─► projector (frozen 1024→256)
-  │           └─► z (256-d latent)
-  │                 ├─► recurrent state (Mamba-2, 256→256, persistent across turns)
-  │                 │     └─► s (256-d state)
-  │                 └─► rectified-flow denoiser (K steps, conditioned on s, z, task)
-  │                       └─► refined plan latent p
-  │                             └─► soft-prefix adapter (256 → n_prefix × llm_hidden)
-  │                                   └─► concat with prompt embeddings
-  │                                         └─► frozen LLM + LoRA → response
-```
+![Architecture](docs/architecture.svg)
 
 Trainable params total ~390M (recurrent + diffusion + adapter + LoRA). Backbone (~35B) and encoder (~335M) are frozen.
 
