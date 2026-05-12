@@ -10,13 +10,14 @@ venv/
 build/
 dist/
 
-# Runtime artifacts (large, regeneratable)
-checkpoints/
-data/
-sessions/
-runs/
-wandb/
-logs/
+# Runtime artifacts (large, regeneratable) — anchored to repo root so nested
+# Python packages like src/lrd_reason/data/ are not accidentally ignored.
+/checkpoints/
+/data/
+/sessions/
+/runs/
+/wandb/
+/logs/
 
 # Weights & encoded targets
 *.pt
