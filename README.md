@@ -67,13 +67,22 @@ A shallow, deployable companion to the main 35B latent-reasoning system. LoRA fi
 
 ### One-liner (philosophy-only, A100 80GB)
 
-End-to-end run with a live progress dashboard. Clones the repo, sets up the venv, downloads Kant + Nietzsche from Project Gutenberg, builds the SFT corpus, then trains:
+End-to-end run with a live progress dashboard. Clones the repo, sets up the venv, downloads Kant + Nietzsche from Project Gutenberg, builds the SFT corpus, then trains.
+
+Repo is private — pick the auth path that matches your box:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/teddytennant/lrd-reason/qwen-uncensored-finetune/scripts/launch.sh | bash
+# Authenticated gh CLI (run `gh auth login` first):
+gh repo clone teddytennant/lrd-reason ~/lrd-run -- --depth 1 --branch qwen-uncensored-finetune \
+  && bash ~/lrd-run/scripts/launch.sh
+
+# Or with a personal access token (repo scope):
+git clone --depth 1 --branch qwen-uncensored-finetune \
+    "https://${GH_TOKEN}@github.com/teddytennant/lrd-reason.git" ~/lrd-run \
+  && bash ~/lrd-run/scripts/launch.sh
 ```
 
-Knobs (env vars): `LRD_WORKDIR=/path` (clone target), `LRD_NO_TUI=1` (stream logs instead of TUI), `LRD_DRY_RUN=1` (stop before training). The config in `configs/finetune_uncensored.yaml` is sized for an A100 80GB (batch=8, grad_ckpt off) — drop batch to 1 and re-enable `grad_checkpointing` for a 24GB card.
+Knobs (env vars): `LRD_WORKDIR=/path` (clone target), `LRD_NO_TUI=1` (stream logs instead of TUI), `LRD_DRY_RUN=1` (stop before training), `GH_TOKEN` (used by launch.sh's clone fallback). The config in `configs/finetune_uncensored.yaml` is sized for an A100 80GB (batch=8, grad_ckpt off) — drop batch to 1 and re-enable `grad_checkpointing` for a 24GB card.
 
 Expected end-to-end: ~10–20 min on an A100 80GB. The dashboard shows step / loss / lr / grad_norm / steps-per-sec / ETA, with the last 20 lines of trainer stdout.
 

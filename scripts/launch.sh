@@ -1,8 +1,18 @@
 #!/usr/bin/env bash
 # One-liner driver for the uncensored 4B LoRA SFT track (philosophy-only).
 #
-# Curl-pipe-bash usage:
-#   curl -sL https://raw.githubusercontent.com/teddytennant/lrd-reason/qwen-uncensored-finetune/scripts/launch.sh | bash
+# The repo is private. Use either `gh` (auth via `gh auth login`) or pass a
+# token in the clone URL. Once cloned, run:
+#   bash <workdir>/scripts/launch.sh
+#
+# Full one-liner (recommended, requires authenticated `gh` CLI):
+#   gh repo clone teddytennant/lrd-reason ~/lrd-run -- --branch qwen-uncensored-finetune --depth 1 \
+#     && bash ~/lrd-run/scripts/launch.sh
+#
+# Token fallback (set GH_TOKEN to a personal access token with repo scope):
+#   git clone --depth 1 --branch qwen-uncensored-finetune \
+#     https://$GH_TOKEN@github.com/teddytennant/lrd-reason.git ~/lrd-run \
+#     && bash ~/lrd-run/scripts/launch.sh
 #
 # Local usage (already cloned, in repo root):
 #   ./scripts/launch.sh
@@ -13,10 +23,12 @@
 #   LRD_BRANCH   — branch to check out (default: qwen-uncensored-finetune).
 #   LRD_NO_TUI=1 — skip the TUI; trainer logs stream to stdout as usual.
 #   LRD_DRY_RUN=1— set up env + data, skip the actual train command.
+#   GH_TOKEN     — used for HTTPS clone fallback if `gh` is unavailable.
 
 set -euo pipefail
 
-REPO_URL="https://github.com/teddytennant/lrd-reason.git"
+REPO_SLUG="teddytennant/lrd-reason"
+REPO_URL="https://github.com/${REPO_SLUG}.git"
 BRANCH="${LRD_BRANCH:-qwen-uncensored-finetune}"
 WORKDIR="${LRD_WORKDIR:-$HOME/lrd-uncensored-run}"
 
@@ -27,18 +39,31 @@ c_red() { printf "\033[1;31m%s\033[0m\n" "$*" >&2; }
 
 step() { c_blue "==> $*"; }
 
-# 0. Locate / clone the repo.
+# 0. Locate / clone the repo. Repo is private; prefer `gh`, fall back to
+#    git with GH_TOKEN, else assume HTTPS credentials are already cached.
+clone_private() {
+  local url="$1" branch="$2" dest="$3"
+  if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+    gh repo clone "$REPO_SLUG" "$dest" -- --depth 1 --branch "$branch"
+  elif [ -n "${GH_TOKEN:-}" ]; then
+    git clone --depth 1 --branch "$branch" \
+      "https://${GH_TOKEN}@github.com/${REPO_SLUG}.git" "$dest"
+  else
+    git clone --depth 1 --branch "$branch" "$url" "$dest"
+  fi
+}
+
 if [ -f "scripts/finetune_uncensored.py" ] && [ -f "configs/finetune_uncensored.yaml" ]; then
   step "using existing checkout at $(pwd)"
 else
-  step "cloning $REPO_URL ($BRANCH) -> $WORKDIR"
+  step "cloning $REPO_SLUG ($BRANCH) -> $WORKDIR"
   if [ -d "$WORKDIR/.git" ]; then
     c_yellow "  workdir already exists, fetching latest"
     git -C "$WORKDIR" fetch --depth 1 origin "$BRANCH"
     git -C "$WORKDIR" checkout "$BRANCH"
     git -C "$WORKDIR" reset --hard "origin/$BRANCH"
   else
-    git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$WORKDIR"
+    clone_private "$REPO_URL" "$BRANCH" "$WORKDIR"
   fi
   cd "$WORKDIR"
 fi
