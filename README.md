@@ -61,6 +61,25 @@ The smoke path uses `StubEncoder` and `StubLLM` — no model weights touched, no
 
 See `LAUNCH.md` for the 72-hour H200 runbook. Not executed by this repo; that's a separate spend.
 
+## Side track: 4B uncensored LoRA SFT
+
+A shallow, deployable companion to the main 35B latent-reasoning system. LoRA fine-tunes `HauhauCS/Qwen3.5-4B-Uncensored-HauhauCS-Aggressive` on the same data philosophy — Kant + Nietzsche raw text for voice, `COT_SYSTEM_PROMPT` traces for reasoning — but with no recurrent or diffusion modules. The uncensored base is chosen so principle VII (Truth Over Obedience) doesn't have to fight a refusal prior.
+
+```bash
+# 1. CoT traces (reuse the existing Stage-2 generator).
+python scripts/generate_data.py --config configs/main.yaml \
+    --problems data/problems.jsonl --output data/cot.uncensored.jsonl
+
+# 2. Mix philosophy + CoT into one SFT corpus.
+python scripts/prepare_uncensored_data.py \
+    --philosophy data/philosophy/ \
+    --cot data/cot.uncensored.jsonl \
+    --output data/uncensored_sft.jsonl --mix 0.35
+
+# 3. LoRA SFT (~16GB VRAM bf16, ~10GB with quantize_4bit: true).
+python scripts/finetune_uncensored.py --config configs/finetune_uncensored.yaml
+```
+
 ## Layout
 
 ```
