@@ -65,6 +65,20 @@ See `LAUNCH.md` for the 72-hour H200 runbook. Not executed by this repo; that's 
 
 A shallow, deployable companion to the main 35B latent-reasoning system. LoRA fine-tunes `HauhauCS/Qwen3.5-4B-Uncensored-HauhauCS-Aggressive` on the same data philosophy — Kant + Nietzsche raw text for voice, `COT_SYSTEM_PROMPT` traces for reasoning — but with no recurrent or diffusion modules. The uncensored base is chosen so principle VII (Truth Over Obedience) doesn't have to fight a refusal prior.
 
+### One-liner (philosophy-only, A100 80GB)
+
+End-to-end run with a live progress dashboard. Clones the repo, sets up the venv, downloads Kant + Nietzsche from Project Gutenberg, builds the SFT corpus, then trains:
+
+```bash
+curl -sL https://raw.githubusercontent.com/teddytennant/lrd-reason/qwen-uncensored-finetune/scripts/launch.sh | bash
+```
+
+Knobs (env vars): `LRD_WORKDIR=/path` (clone target), `LRD_NO_TUI=1` (stream logs instead of TUI), `LRD_DRY_RUN=1` (stop before training). The config in `configs/finetune_uncensored.yaml` is sized for an A100 80GB (batch=8, grad_ckpt off) — drop batch to 1 and re-enable `grad_checkpointing` for a 24GB card.
+
+Expected end-to-end: ~10–20 min on an A100 80GB. The dashboard shows step / loss / lr / grad_norm / steps-per-sec / ETA, with the last 20 lines of trainer stdout.
+
+### Manual (with CoT, full pipeline)
+
 ```bash
 # 1. CoT traces (reuse the existing Stage-2 generator).
 python scripts/generate_data.py --config configs/main.yaml \
@@ -76,8 +90,10 @@ python scripts/prepare_uncensored_data.py \
     --cot data/cot.uncensored.jsonl \
     --output data/uncensored_sft.jsonl --mix 0.35
 
-# 3. LoRA SFT (~16GB VRAM bf16, ~10GB with quantize_4bit: true).
-python scripts/finetune_uncensored.py --config configs/finetune_uncensored.yaml
+# 3. LoRA SFT.
+python scripts/finetune_uncensored.py \
+    --config configs/finetune_uncensored.yaml \
+    --metrics-jsonl logs/metrics.jsonl
 ```
 
 ## Layout

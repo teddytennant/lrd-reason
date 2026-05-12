@@ -2,8 +2,9 @@
 # Same data philosophy as lrd-reason (philosophy raw text + COT_SYSTEM_PROMPT
 # traces) but a standalone, shallow track — no recurrent/diffusion modules.
 #
-# VRAM expectations (bf16 LoRA, packing=True, seq=2048, batch=1, accum=16):
-#   ~14–16 GB on a single 24GB card. Set quantize_4bit: true for ~9–10 GB QLoRA.
+# VRAM expectations (bf16 LoRA, packing=True, seq=2048, batch=8, accum=2):
+#   ~30–40 GB on a single A100 80GB. Effective batch = 16 (unchanged).
+#   For a 24GB card, drop batch to 1, accum to 16, and re-enable grad_checkpointing.
 
 model_id: HauhauCS/Qwen3.5-4B-Uncensored-HauhauCS-Aggressive
 trust_remote_code: true
@@ -11,14 +12,14 @@ trust_remote_code: true
 output_dir: runs/finetune_uncensored
 seed: 1337
 max_seq_len: 2048
-per_device_batch_size: 1
-grad_accum_steps: 16
+per_device_batch_size: 8
+grad_accum_steps: 2
 num_train_epochs: 2.0
 lr: 2.0e-4
 weight_decay: 0.0
 warmup_ratio: 0.03
 lr_scheduler: cosine
-grad_checkpointing: true
+grad_checkpointing: false
 log_every: 25
 save_every: 500
 bf16: true

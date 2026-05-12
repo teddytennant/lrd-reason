@@ -158,7 +158,42 @@ def build_lora_model(spec: FineTuneSpec):
     return model, tokenizer
 
 
-def train(spec: FineTuneSpec, train_path: Path, eval_path: Path | None) -> None:
+class JsonlMetricsCallback:
+    """Append trainer log dicts to a JSONL file so external watchers (e.g. tui.py)
+    can read training progress without parsing stdout.
+
+    Implemented as duck-typed TrainerCallback to keep this module importable
+    without transformers installed (the heavy imports stay inside train()).
+    """
+
+    def __init__(self, path: str | Path) -> None:
+        from pathlib import Path as _P
+        self.path = _P(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+
+    def on_log(self, args, state, control, logs=None, **kwargs):  # type: ignore[no-untyped-def]
+        if logs is None:
+            return
+        import json as _json
+        import time as _time
+        record = {
+            "step": getattr(state, "global_step", None),
+            "max_steps": getattr(state, "max_steps", None),
+            "epoch": getattr(state, "epoch", None),
+            "wall": _time.time(),
+            **logs,
+        }
+        with self.path.open("a") as f:
+            f.write(_json.dumps(record) + "\n")
+
+    # Other callback hooks are no-ops; HF TrainerCallback tolerates missing methods.
+    def on_train_begin(self, args, state, control, **kwargs): return None  # noqa: E704
+    def on_train_end(self, args, state, control, **kwargs): return None  # noqa: E704
+    def on_step_end(self, args, state, control, **kwargs): return None  # noqa: E704
+
+
+def train(spec: FineTuneSpec, train_path: Path, eval_path: Path | None,
+          metrics_jsonl: Path | None = None) -> None:
     try:
         from datasets import Dataset
         from trl import SFTConfig, SFTTrainer
@@ -200,12 +235,17 @@ def train(spec: FineTuneSpec, train_path: Path, eval_path: Path | None) -> None:
         report_to=[],
     )
 
+    callbacks = []
+    if metrics_jsonl is not None:
+        callbacks.append(JsonlMetricsCallback(metrics_jsonl))
+
     trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
         args=sft_cfg,
         train_dataset=train_ds,
         eval_dataset=eval_ds,
+        callbacks=callbacks or None,
     )
     trainer.train()
     trainer.save_model(spec.output_dir)
@@ -222,6 +262,8 @@ def main() -> None:
                     help="override spec.eval_jsonl")
     ap.add_argument("--output", type=Path, default=None,
                     help="override spec.output_dir")
+    ap.add_argument("--metrics-jsonl", type=Path, default=None,
+                    help="append per-log-step training metrics to this JSONL (for tui.py)")
     args = ap.parse_args()
 
     spec = FineTuneSpec.from_yaml(args.config)
@@ -236,7 +278,7 @@ def main() -> None:
     eval_path = Path(spec.eval_jsonl) if spec.eval_jsonl else None
     if not train_path.exists():
         raise SystemExit(f"train jsonl not found: {train_path}")
-    train(spec, train_path, eval_path)
+    train(spec, train_path, eval_path, metrics_jsonl=args.metrics_jsonl)
 
 
 if __name__ == "__main__":
