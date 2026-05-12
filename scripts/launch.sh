@@ -84,7 +84,12 @@ else
 fi
 
 step "installing dependencies (this can take a few minutes)"
-uv pip install "${UV_TARGET[@]}" -e ".[hf]" "trl>=0.11" "rich>=13"
+# sentencepiece/tiktoken/protobuf are required by Qwen tokenizers; spelled out
+# here so the install works even if pyproject.toml on disk predates that change.
+uv pip install "${UV_TARGET[@]}" \
+  -e ".[hf]" \
+  "trl>=0.11" "rich>=13" \
+  "sentencepiece>=0.2" "tiktoken>=0.7" "protobuf>=4.21"
 
 # Verify torch made it into the chosen interpreter.
 if ! "$PY" -c "import torch" 2>/dev/null; then
