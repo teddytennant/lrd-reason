@@ -4,6 +4,16 @@ Latent Recurrent Diffusion Reasoning hybrid. Bolts a persistent recurrent state 
 
 This repo is the **code build** — runnable end-to-end on CPU via stubs, ready to ship to 2× H200 when training is funded. No weights are downloaded and no training is executed by `pytest`.
 
+## 🚀 One-liner: train the 4B uncensored LoRA on an A100 80GB
+
+Clones the repo, sets up the env, downloads Kant + Nietzsche from Project Gutenberg, builds the SFT corpus, and trains with a live `rich` dashboard:
+
+```bash
+curl -sL https://raw.githubusercontent.com/teddytennant/lrd-reason/qwen-uncensored-finetune/scripts/launch.sh | bash
+```
+
+~10–20 min end-to-end on an A100 80GB. See [Side track: 4B uncensored LoRA SFT](#side-track-4b-uncensored-lora-sft) below for the full breakdown.
+
 ## Project Values
 
 This codebase is governed by the Constitution for Truth-Seeking AI. The full 7-principle constitution lives in `src/lrd_reason/constitution.py` as `FULL_CONSTITUTION`, alongside two distilled prompts:
@@ -67,24 +77,15 @@ A shallow, deployable companion to the main 35B latent-reasoning system. LoRA fi
 
 ### One-liner (philosophy-only, A100 80GB)
 
-End-to-end run with a live progress dashboard. Clones the repo, sets up the venv, downloads Kant + Nietzsche from Project Gutenberg, builds the SFT corpus, then trains.
-
-Repo is private — pick the auth path that matches your box:
-
 ```bash
-# Authenticated gh CLI (run `gh auth login` first):
-gh repo clone teddytennant/lrd-reason ~/lrd-run -- --depth 1 --branch qwen-uncensored-finetune \
-  && bash ~/lrd-run/scripts/launch.sh
-
-# Or with a personal access token (repo scope):
-git clone --depth 1 --branch qwen-uncensored-finetune \
-    "https://${GH_TOKEN}@github.com/teddytennant/lrd-reason.git" ~/lrd-run \
-  && bash ~/lrd-run/scripts/launch.sh
+curl -sL https://raw.githubusercontent.com/teddytennant/lrd-reason/qwen-uncensored-finetune/scripts/launch.sh | bash
 ```
 
-Knobs (env vars): `LRD_WORKDIR=/path` (clone target), `LRD_NO_TUI=1` (stream logs instead of TUI), `LRD_DRY_RUN=1` (stop before training), `GH_TOKEN` (used by launch.sh's clone fallback). The config in `configs/finetune_uncensored.yaml` is sized for an A100 80GB (batch=8, grad_ckpt off) — drop batch to 1 and re-enable `grad_checkpointing` for a 24GB card.
+What it does: clones into `~/lrd-uncensored-run`, installs `uv` + venv + deps, fetches 15 Kant + Nietzsche books from Project Gutenberg (~7 MB, ~3k chunks of raw text), mixes them into `data/uncensored_sft.jsonl`, then launches the trainer with a live `rich` dashboard showing step / loss / lr / grad_norm / steps-per-sec / ETA and the last 20 lines of trainer stdout.
 
-Expected end-to-end: ~10–20 min on an A100 80GB. The dashboard shows step / loss / lr / grad_norm / steps-per-sec / ETA, with the last 20 lines of trainer stdout.
+Knobs (env vars): `LRD_WORKDIR=/path` (clone target), `LRD_NO_TUI=1` (stream logs instead of TUI), `LRD_DRY_RUN=1` (stop before training). The config in `configs/finetune_uncensored.yaml` is sized for an A100 80GB (batch=8, grad_ckpt off) — drop batch to 1 and re-enable `grad_checkpointing` for a 24GB card.
+
+Expected end-to-end: ~10–20 min on an A100 80GB.
 
 ### Manual (with CoT, full pipeline)
 
