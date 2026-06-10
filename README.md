@@ -39,7 +39,7 @@ Three stages, designed so that values come from real human truth-seekers (raw te
 
 | Stage | Goal | What trains | Data | Status |
 |---|---|---|---|---|
-| **1. Unsupervised pretrain** | Imprint voice and reasoning patterns from real exemplars | LoRA adapter on the LLM | Raw text: complete Nietzsche + Kant from Project Gutenberg, Lean mathlib4, arXiv math, SQLite/TigerBeetle/CPython source, FineWeb-Edu slice | TO BUILD (`train/stage_pretrain.py`) |
+| **1. Unsupervised pretrain** | Imprint voice and reasoning patterns from real exemplars | LoRA adapter on the LLM | Raw text: complete Nietzsche + Kant from Project Gutenberg, Lean mathlib4, arXiv math, SQLite/TigerBeetle/CPython source, FineWeb-Edu slice | Built (`train/stage_pretrain.py`) |
 | **2. Cold-start latent SFT** | Seed the recurrent + diffusion modules with the `(prompt → latent → CoT)` mapping | Recurrent + diffusion; then adapter + LoRA | ~10–50k high-quality CoT traces from Stage-2 generator (`scripts/generate_data.py`) under `COT_SYSTEM_PROMPT` | Built (`train/stage1.py` + `train/stage2.py`) |
 | **3. RLVR main phase** | Grow real reasoning competence from verifier reward | All trainable modules, with KL anchor to Stage-2 checkpoint | Verifiable problems: MATH, GSM8K, CodeContests, APPS, BBH, LogiQA, mathlib4 type-checks | TO BUILD (`train/stage_rlvr.py` + `eval/verifiers/`) |
 
@@ -70,7 +70,7 @@ src/lrd_reason/
   constitution.py   distilled CoT + problem-generator prompts; FULL_CONSTITUTION
   models/           encoder, recurrent_state, diffusion, adapter, pipeline
   data/             dataset, collate, cot_generator
-  train/            loop, stage1, stage2 (cold-start); stage_pretrain, stage_rlvr (to build)
+  train/            loop, stage_pretrain, stage1, stage2 (cold-start); stage_rlvr (to build)
   infer/            state_store, pipeline, cli
   eval/             gsm8k, math_bench, multi_turn, metrics, ablations; verifiers/ (to build)
 scripts/        thin entry points

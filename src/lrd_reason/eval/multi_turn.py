@@ -43,9 +43,7 @@ def _has_keywords(text: str, keywords: list[str]) -> bool:
 
 
 def default_contradiction_judge(a: str, b: str) -> bool:
-    """Crude: flag a contradiction iff both responses contain a number but the
-    extracted final numbers disagree. Good enough for the smoke path; replace
-    with an LLM-as-judge call on the H200 box."""
+    """Crude heuristic: flag contradiction if both have numbers that disagree."""
     from .metrics import extract_final_number
 
     an, bn = extract_final_number(a), extract_final_number(b)

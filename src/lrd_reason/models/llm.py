@@ -187,6 +187,11 @@ class HFLLM(nn.Module):
             texts, padding=True, truncation=True, return_tensors="pt"
         ).input_ids
 
+    def encode_text(self, text: str) -> list[int]:
+        """Unpadded, untruncated id stream — used for corpus packing in pretrain."""
+        self._ensure_loaded()
+        return self._tokenizer.encode(text, add_special_tokens=False)  # type: ignore[union-attr]
+
     def decode(self, ids: torch.Tensor) -> list[str]:
         self._ensure_loaded()
         return self._tokenizer.batch_decode(ids, skip_special_tokens=True)  # type: ignore[union-attr]

@@ -1,39 +1,9 @@
-"""Curriculum Stage 3: RLVR (Reinforcement Learning from Verifiable Rewards).
+"""Curriculum Stage 3: RLVR (policy gradient from verifiable verifiers, no learned RM).
 
-Runs AFTER the cold-start stages (`stage1.py` + `stage2.py`). The cold-start
-checkpoint provides both the initial policy and the KL reference; reward comes
-from per-domain verifiers in `lrd_reason/eval/verifiers/`, not a learned reward
-model — this is what makes the value imprint grounded in reality rather than
-in a teacher's posture.
+Stub. Runs after cold-start; uses stage2 ckpt as KL ref + verifiers/ for reward.
+See README "Training curriculum" (Stage 3) and eval/verifiers/.
 
-Trainable: all the same modules the cold-start trained (recurrent + diffusion +
-adapter + LoRA), now with policy-gradient signal.
-
-Algorithm: GRPO-style group-relative advantages without a separate value head.
-For each problem in a batch, sample K rollouts at temperature > 0, score each
-rollout via the appropriate verifier, normalise rewards within the group, then
-take a clipped policy-gradient step.
-
-Reward shape per rollout = verifier_pass
-                         + format_bonus  (final "Final answer:" marker present)
-                         - length_penalty (per-token over budget)
-                         - hedge_penalty  (regex hits on "I'd suggest", "perhaps", etc.)
-KL anchor: against the Stage-2 checkpoint, weight ~0.01–0.05 to start.
-
-Verifiers (per problem domain, see `lrd_reason/eval/verifiers/`):
-- math: numeric equivalence via sympy
-- code: pytest pass rate against held-out tests
-- logic: exact-match
-- multi-hop QA: exact-match on gold span
-- formal (mathlib4): Lean type-check
-
-Caveats for this architecture:
-- The recurrent state can develop pathological hidden trajectories under RL; the
-  KL anchor against the cold-start is essential.
-- The diffusion denoiser introduces variance into rollouts; expect to need lower
-  learning rates and more rollouts per update than standard GRPO on a flat LLM.
-
-To build on cluster.
+Raises NotImplementedError until the cluster build.
 """
 
 from __future__ import annotations
@@ -49,10 +19,7 @@ def train(
     cold_start_checkpoint: str | None = None,
     max_steps: int | None = None,
 ) -> dict[str, float]:
-    raise NotImplementedError(
-        "Curriculum Stage 3 (RLVR) is not yet implemented. "
-        "See module docstring for the algorithm and reward shape."
-    )
+    raise NotImplementedError("Stage 3 RLVR is a stub (see README).")
 
 
 def main() -> None:

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 
 from lrd_reason.data.collate import collate_pairs
@@ -78,3 +80,36 @@ def test_cot_generator_e2e(tmp_path):
     n = gen.generate_to_jsonl(["q1", "q2"], out_path=out, append=False)
     assert n == 2
     assert sum(1 for _ in out.open()) == 2
+
+
+def test_encode_targets_script_smoke(tmp_path, smoke_fixture_path, smoke_spec):
+    """Exercise the new encode_targets script (implements the missing LAUNCH step)."""
+    import subprocess
+    import sys
+
+    out_pt = tmp_path / "latents.pt"
+    script = Path(__file__).parents[1] / "scripts" / "encode_targets.py"
+    cmd = [
+        sys.executable,
+        str(script),
+        "--config",
+        str(Path(__file__).parents[1] / "configs" / "smoke.yaml"),
+        "--inputs",
+        str(smoke_fixture_path),
+        "--out",
+        str(out_pt),
+        "--batch-size",
+        "4",
+        "--device",
+        "cpu",
+    ]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    assert res.returncode == 0, res.stderr
+    assert out_pt.exists()
+
+    blob = torch.load(out_pt, map_location="cpu", weights_only=False)
+    assert isinstance(blob, dict)
+    assert len(blob) >= 1
+    for v in blob.values():
+        assert v.shape == (smoke_spec.model.latent_dim,)
+        break

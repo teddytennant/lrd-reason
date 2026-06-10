@@ -25,9 +25,12 @@ class RunConfig:
 
 @dataclass
 class EncoderConfig:
-    kind: str = "stub"  # stub | bge | lingbot
-    hf_id: str | None = None
-    raw_dim: int = 64
+    # Defaults mirror the real run (configs/main.yaml); smoke/test configs
+    # explicitly opt into kind="stub". BGE lazy-loads, so constructing a
+    # default config never touches the network.
+    kind: str = "bge"  # bge | stub | lingbot
+    hf_id: str | None = "BAAI/bge-large-en-v1.5"
+    raw_dim: int = 1024
     pooling: str = "cls"  # cls | mean
     projector_path: str | None = None
 
@@ -85,6 +88,10 @@ class DataConfig:
     latents_path: str | None = None
     task_embed_dim: int = 16
     num_workers: int = 0
+    # Raw-text corpus for the unsupervised pretrain (curriculum Stage 1).
+    # File paths or glob patterns, resolved relative to the working directory.
+    pretrain_corpus: list[str] = field(default_factory=list)
+    pretrain_block_size: int = 256
 
 
 @dataclass
